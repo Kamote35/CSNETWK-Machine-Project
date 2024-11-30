@@ -1,31 +1,38 @@
 import socket
 
-def main():
-    # Define the server address and port
-    server_address = 'localhost'
-    server_port = 12345
+HEADER = 64
+SERVER_PORT = 5050
+FORMAT = 'utf-8'
+DISCONNECT_MESSAGE = "/leave"
+SERVER_ADDRESS = socket.gethostbyname(socket.gethostname())
+ADDR = (SERVER_ADDRESS, SERVER_PORT)
+CONNECT_MESSAGE = (f"/join {SERVER_ADDRESS} {SERVER_PORT}")
 
-    # Create a TCP/IP socket
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(ADDR)
 
-    try:
-        # Connect the socket to the server's address and port
-        client_socket.connect((server_address, server_port))
-        print(f"Connected to server at {server_address}:{server_port}")
+def send(msg):
+    message = msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+    client.send(send_length)
+    client.send(message)
 
-        # Send data to the server
-        message = "Hello, Server!"
-        client_socket.sendall(message.encode('utf-8'))
-        print(f"Sent: {message}")
+# send(input("Please input a messag/command: "))
 
-        # Receive data from the server
-        data = client_socket.recv(1024)
-        print(f"Received: {data.decode('utf-8')}")
+print("To connect to server type: /join <server_address> <server_port>")
+print("")
+client_message = input("Please input a message/command: ")
 
-    finally:
-        # Close the socket
-        client_socket.close()
-        print("Connection closed")
+if client_message == CONNECT_MESSAGE:
+    send(client_message)
+    print(f"Connected to succesfully to the File Exchange Server {SERVER_ADDRESS}!")
 
-if __name__ == "__main__":
-    main()
+    while client_message != DISCONNECT_MESSAGE:
+        client_message = input("Please input a message/command: ")
+        send(client_message)
+
+if client_message == DISCONNECT_MESSAGE:
+    send(client_message)
+    print(f"Disconnected successfully from File Exchange Server: {SERVER_ADDRESS}!")
